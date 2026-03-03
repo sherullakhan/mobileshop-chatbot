@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mobile Shop – AI Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #060610;
+    --surface: #0e0e1c;
+    --surface2: #14142a;
+    --border: #22223a;
+    --accent: #6c63ff;
+    --accent2: #a78bfa;
+    --text: #f0f0f5;
+    --muted: #7070a0;
+    --user-bubble: #6c63ff;
+    --bot-bubble: #14142a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(108,99,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(108,99,255,0.04) 1px, transparent 1px);
+    background-size: 36px 36px;
+    pointer-events: none;
+  }
+
+  .chat-wrapper {
+    width: 420px;
+    height: 680px;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(108,99,255,0.12);
+    animation: slideUp 0.5s cubic-bezier(0.16,1,0.3,1);
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .header {
+    padding: 18px 20px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .logo-mark {
+    width: 42px;
+    height: 42px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .header-info h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .header-info p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    background: #4ade80;
+    border-radius: 50%;
+    margin-left: auto;
+    box-shadow: 0 0 8px #4ade80;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    scroll-behavior: smooth;
+  }
+
+  .messages::-webkit-scrollbar { width: 4px; }
+  .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .msg {
+    display: flex;
+    gap: 10px;
+    animation: msgIn 0.3s cubic-bezier(0.16,1,0.3,1);
+  }
+
+  @keyframes msgIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg.user { flex-direction: row-reverse; }
+
+  .avatar {
+    width: 30px; height: 30px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .msg.bot .avatar { background: linear-gradient(135deg, var(--accent), var(--accent2)); }
+  .msg.user .avatar { background: var(--surface2); border: 1px solid var(--border); }
+
+  .bubble {
+    max-width: 78%;
+    padding: 11px 15px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .msg.bot .bubble {
+    background: var(--bot-bubble);
+    border: 1px solid var(--border);
+    border-top-left-radius: 4px;
+  }
+
+  .msg.user .bubble {
+    background: var(--user-bubble);
+    border-top-right-radius: 4px;
+    color: white;
+  }
+
+  .quick-replies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    padding: 0 12px 6px 52px;
+    animation: msgIn 0.3s ease;
+  }
+
+  .qr-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--accent2);
+    padding: 6px 13px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .qr-btn:hover {
+    background: rgba(108,99,255,0.12);
+    border-color: var(--accent);
+  }
+
+  .lead-form {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    border-top-left-radius: 4px;
+    padding: 16px;
+    max-width: 88%;
+    animation: msgIn 0.3s ease;
+  }
+
+  .lead-form h4 {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent2);
+    margin-bottom: 12px;
+  }
+
+  .lead-input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    margin-bottom: 8px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .lead-input:focus { border-color: var(--accent); }
+  .lead-input::placeholder { color: var(--muted); }
+
+  .submit-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 13px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    color: white;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+
+  .submit-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+  .typing { display: flex; gap: 10px; align-items: center; }
+
+  .typing-dots {
+    display: flex;
+    gap: 4px;
+    padding: 11px 15px;
+    background: var(--bot-bubble);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    border-top-left-radius: 4px;
+  }
+
+  .typing-dots span {
+    width: 6px; height: 6px;
+    background: var(--muted);
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+
+  .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-6px); }
+  }
+
+  .input-area {
+    padding: 14px 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    background: var(--surface2);
+  }
+
+  .text-input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 11px 15px;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    outline: none;
+    resize: none;
+    max-height: 100px;
+    line-height: 1.5;
+    transition: border-color 0.2s;
+  }
+
+  .text-input:focus { border-color: var(--accent); }
+  .text-input::placeholder { color: var(--muted); }
+
+  .send-btn {
+    width: 42px; height: 42px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.1s, opacity 0.2s;
+  }
+
+  .send-btn:hover { opacity: 0.88; transform: scale(1.05); }
+  .send-btn svg { width: 17px; height: 17px; fill: white; }
+
+  .success-msg {
+    text-align: center;
+    padding: 14px 16px;
+    background: rgba(74,222,128,0.05);
+    border: 1px solid rgba(74,222,128,0.2);
+    border-radius: 16px;
+    font-size: 13px;
+    color: #4ade80;
+    max-width: 88%;
+  }
+
+  .success-msg strong {
+    display: block;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div class="chat-wrapper">
+  <div class="header">
+    <div class="logo-mark">📱</div>
+    <div class="header-info">
+      <h2>Mobile Shop Assistant</h2>
+      <p>Phones • Accessories • Repairs</p>
+    </div>
+    <div class="status-dot"></div>
+  </div>
+
+  <div class="messages" id="messages"></div>
+
+  <div class="input-area">
+    <textarea class="text-input" id="userInput" placeholder="Ask about phones, price, offers..." rows="1"></textarea>
+    <button class="send-btn" onclick="sendMessage()">
+      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </div>
+</div>
+
+<script>
+  // ⚠️ Python backend (app.py) run aaganum — then only this works!
+  const BACKEND_URL = "http://localhost:5000/chat";
+
+  let conversationHistory = [];
+  let leadCollected = false;
+  let messageCount = 0;
+
+  const quickReplies = [
+    ["Budget Phones under 15k", "Best Camera Phone", "iPhone Models", "Repair Service"],
+    ["Samsung Options", "Redmi Best Model", "EMI Available?", "Exchange Offer"],
+    ["OnePlus Models", "Gaming Phone", "Battery Life Best", "Accessories"]
+  ];
+
+  function addMessage(role, content) {
+    const messages = document.getElementById('messages');
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `msg ${role}`;
+
+    const avatar = document.createElement('div');
+    avatar.className = 'avatar';
+    avatar.textContent = role === 'bot' ? '📱' : '🧑';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.textContent = content;
+
+    msgDiv.appendChild(avatar);
+    msgDiv.appendChild(bubble);
+    messages.appendChild(msgDiv);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  function addQuickReplies(replies) {
+    const messages = document.getElementById('messages');
+    const existing = document.getElementById('quick-replies');
+    if (existing) existing.remove();
+
+    const qrDiv = document.createElement('div');
+    qrDiv.className = 'quick-replies';
+    qrDiv.id = 'quick-replies';
+
+    replies.forEach(r => {
+      const btn = document.createElement('button');
+      btn.className = 'qr-btn';
+      btn.textContent = r;
+      btn.onclick = () => { qrDiv.remove(); handleUserMessage(r); };
+      qrDiv.appendChild(btn);
+    });
+
+    messages.appendChild(qrDiv);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  function showTyping() {
+    const messages = document.getElementById('messages');
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'msg bot typing';
+    typingDiv.id = 'typing';
+
+    const avatar = document.createElement('div');
+    avatar.className = 'avatar';
+    avatar.textContent = '📱';
+
+    const dots = document.createElement('div');
+    dots.className = 'typing-dots';
+    dots.innerHTML = '<span></span><span></span><span></span>';
+
+    typingDiv.appendChild(avatar);
+    typingDiv.appendChild(dots);
+    messages.appendChild(typingDiv);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  function hideTyping() {
+    const t = document.getElementById('typing');
+    if (t) t.remove();
+  }
+
+  function showLeadForm() {
+    const messages = document.getElementById('messages');
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'display:flex;gap:10px;padding-left:40px;';
+
+    const form = document.createElement('div');
+    form.className = 'lead-form';
+    form.innerHTML = `
+      <h4>📞 Get a Callback / Visit Us</h4>
+      <input class="lead-input" id="leadName" placeholder="Your Name" />
+      <input class="lead-input" id="leadPhone" placeholder="Phone Number" />
+      <input class="lead-input" id="leadInterest" placeholder="Interested in? (e.g. Samsung S24)" />
+      <button class="submit-btn" onclick="submitLead()">Book Callback →</button>
+    `;
+
+    wrapper.appendChild(form);
+    messages.appendChild(wrapper);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  function submitLead() {
+    const name = document.getElementById('leadName').value.trim();
+    const phone = document.getElementById('leadPhone').value.trim();
+    const interest = document.getElementById('leadInterest').value.trim();
+
+    if (!name || !phone) {
+      alert('Please enter name and phone number!');
+      return;
+    }
+
+    leadCollected = true;
+
+    // Save to Google Sheets
+    const SHEET_URL = "https://script.google.com/macros/s/AKfycbwFI907idMUGTts1fQE3pXzyuSoM6HYo3Q_aFS7UPjf5WCsz9VeMsrx07jTPStA6sE/exec";
+    fetch(SHEET_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, phone, interest })
+    })
+    .then(() => console.log("✅ Lead saved to Google Sheets!"))
+    .catch(err => console.log("Sheet error:", err));
+
+    document.querySelectorAll('.lead-form').forEach(f => f.closest('div').remove());
+
+    const messages = document.getElementById('messages');
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'display:flex;gap:10px;padding-left:40px;';
+
+    const success = document.createElement('div');
+    success.className = 'success-msg';
+    success.innerHTML = `<strong>✅ Thank you, ${name}!</strong>Our team will call you on ${phone} shortly! 🎉`;
+
+    wrapper.appendChild(success);
+    messages.appendChild(wrapper);
+    messages.scrollTop = messages.scrollHeight;
+
+    setTimeout(() => {
+      addMessage('bot', `Great ${name}! Our team will contact you soon. Anything else I can help you with? 😊`);
+    }, 800);
+  }
+
+  async function getBotResponse(userMessage) {
+    conversationHistory.push({ role: 'user', content: userMessage });
+
+    const shouldAskLead = messageCount >= 2 && !leadCollected;
+
+    try {
+      const response = await fetch(BACKEND_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: conversationHistory,
+          askLead: shouldAskLead
+        })
+      });
+
+      const data = await response.json();
+      const botReply = data.reply;
+
+      conversationHistory.push({ role: 'assistant', content: botReply });
+      messageCount++;
+      return { text: botReply, showLead: shouldAskLead };
+
+    } catch (err) {
+      return {
+        text: "⚠️ Backend connect aagala! app.py run pannitingala? Terminal la: python app.py",
+        showLead: false
+      };
+    }
+  }
+
+  async function handleUserMessage(text) {
+    const qr = document.getElementById('quick-replies');
+    if (qr) qr.remove();
+
+    addMessage('user', text);
+    showTyping();
+
+    const { text: botReply, showLead } = await getBotResponse(text);
+    hideTyping();
+    addMessage('bot', botReply);
+
+    if (showLead && !leadCollected) {
+      setTimeout(() => showLeadForm(), 500);
+    } else {
+      const idx = Math.min(Math.floor(messageCount / 2), quickReplies.length - 1);
+      setTimeout(() => addQuickReplies(quickReplies[idx]), 300);
+    }
+  }
+
+  function sendMessage() {
+    const input = document.getElementById('userInput');
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    input.style.height = 'auto';
+    handleUserMessage(text);
+  }
+
+  document.getElementById('userInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+
+  document.getElementById('userInput').addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+  });
+
+  window.onload = () => {
+    setTimeout(() => {
+      addMessage('bot', "Hi! 👋 Welcome to our Mobile Shop! Looking for a new phone, accessories, or repair service? I'm here to help! 😊");
+      setTimeout(() => addQuickReplies(quickReplies[0]), 500);
+    }, 400);
+  };
+</script>
+</body>
+</html>

@@ -1,13 +1,17 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from groq import Groq
+from dotenv import load_dotenv
+import os
+
+
+load_dotenv()  # .env file load pannudu
 
 app = Flask(__name__)
-CORS(app)  # Browser la call pannurathu ku venum
+CORS(app)
 
-# 🔑 Ungal Groq API Key inga போடுங்க
-# console.groq.com la signup → API Keys → Create key → copy paste here
-GROQ_API_KEY ="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"
+# 🔑 API Key - environment variable la irukku (safe!)
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
 
 client = Groq(api_key=GROQ_API_KEY)
 
@@ -38,7 +42,7 @@ def chat():
         messages = data.get('messages', [])
 
         response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",  # Free Groq model
+            model="llama-3.3-70b-versatile",
             messages=[
                 {"role": "system", "content": SHOP_CONTEXT},
                 *messages
@@ -56,4 +60,5 @@ def chat():
 if __name__ == '__main__':
     print("✅ Mobile Shop Chatbot Server Running!")
     print("🌐 Open index.html in browser")
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)

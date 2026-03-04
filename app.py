@@ -1,13 +1,12 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from groq import Groq
 from dotenv import load_dotenv
 import os
 
-
 load_dotenv()  # .env file load pannudu
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='.')
 CORS(app)
 
 # 🔑 API Key - environment variable la irukku (safe!)
@@ -34,6 +33,9 @@ Your job:
 
 IMPORTANT: Reply in the same language the user uses. Tamil la keataal Tamil la sollu. English la keataal English la sollu.
 """
+@app.route('/')
+def index():
+    return send_from_directory('.', 'index.html')
 
 @app.route('/chat', methods=['POST'])
 def chat():
